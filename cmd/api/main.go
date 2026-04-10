@@ -15,6 +15,7 @@ import (
 	"github.com/alpardfm/haze-api/internal/config"
 	"github.com/alpardfm/haze-api/internal/database"
 	"github.com/alpardfm/haze-api/internal/health"
+	"github.com/alpardfm/haze-api/internal/publicschedule"
 	"github.com/alpardfm/haze-api/internal/shared/response"
 )
 
@@ -71,6 +72,21 @@ func main() {
 	mux.Handle("GET /appointments/{id}", auth.RequireAuth(tokenManager, http.HandlerFunc(appointmentHandler.Detail)))
 	mux.Handle("PUT /appointments/{id}", auth.RequireAuth(tokenManager, http.HandlerFunc(appointmentHandler.Update)))
 	mux.Handle("PATCH /appointments/{id}/cancel", auth.RequireAuth(tokenManager, http.HandlerFunc(appointmentHandler.Cancel)))
+
+	var publicScheduleStore publicschedule.Store
+	if db != nil {
+		publicScheduleStore = publicschedule.SQLStore{
+			DB:       db,
+			Timezone: cfg.Timezone.String(),
+		}
+	}
+	publicScheduleHandler := publicschedule.Handler{
+		Service: &publicschedule.Service{
+			Store:    publicScheduleStore,
+			Timezone: cfg.Timezone,
+		},
+	}
+	mux.HandleFunc("GET /public/schedules", publicScheduleHandler.List)
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		response.JSON(w, http.StatusNotFound, response.Envelope{

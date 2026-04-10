@@ -183,15 +183,15 @@ Public/client bisa melihat jadwal yang sudah terisi per tanggal.
 
 ### Tasks
 
-* [ ] implement endpoint `GET /public/schedules?date=YYYY-MM-DD`
-* [ ] validasi query `date`
-* [ ] ambil appointment aktif pada tanggal tersebut
-* [ ] exclude cancelled appointment
-* [ ] urutkan berdasarkan `start_at`
-* [ ] mapping response public hanya `start`, `end`, `status`
-* [ ] jangan tampilkan `client_name`, `address`, `notes`
-* [ ] buat test response kosong
-* [ ] buat test response berisi occupied ranges
+* [x] implement endpoint `GET /public/schedules?date=YYYY-MM-DD`
+* [x] validasi query `date`
+* [x] ambil appointment aktif pada tanggal tersebut
+* [x] exclude cancelled appointment
+* [x] urutkan berdasarkan `start_at`
+* [x] mapping response public hanya `start`, `end`, `status`
+* [x] jangan tampilkan `client_name`, `address`, `notes`
+* [x] buat test response kosong
+* [x] buat test response berisi occupied ranges
 
 ### Output
 
