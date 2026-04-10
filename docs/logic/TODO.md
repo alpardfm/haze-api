@@ -69,14 +69,14 @@ Admin bisa login ke sistem.
 
 ### Tasks
 
-* [ ] buat seed / cara insert admin awal
-* [ ] implement login admin
-* [ ] validasi email dan password
-* [ ] hashing password
-* [ ] generate auth token / session strategy sederhana
-* [ ] middleware auth untuk endpoint private
-* [ ] buat endpoint `POST /auth/login`
-* [ ] buat test minimal login success / failed
+* [x] buat seed / cara insert admin awal
+* [x] implement login admin
+* [x] validasi email dan password
+* [x] hashing password
+* [x] generate auth token / session strategy sederhana
+* [x] middleware auth untuk endpoint private
+* [x] buat endpoint `POST /auth/login`
+* [x] buat test minimal login success / failed
 
 ### Output
 

@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/alpardfm/haze-api/internal/auth"
 	"github.com/alpardfm/haze-api/internal/config"
 	"github.com/alpardfm/haze-api/internal/database"
 	"github.com/alpardfm/haze-api/internal/health"
@@ -41,6 +42,19 @@ func main() {
 	health.RegisterRoutes(mux, health.Handler{
 		DB: db,
 	})
+
+	tokenManager := auth.NewTokenManager(cfg.AuthTokenSecret, cfg.AuthTokenTTL)
+	var authStore auth.Store
+	if db != nil {
+		authStore = auth.SQLStore{DB: db}
+	}
+	auth.RegisterRoutes(mux, auth.Handler{
+		Service: &auth.Service{
+			Store:        authStore,
+			TokenManager: tokenManager,
+		},
+	})
+
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		response.JSON(w, http.StatusNotFound, response.Envelope{
 			Success: false,

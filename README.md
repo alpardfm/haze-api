@@ -344,6 +344,12 @@ Run API server:
 go run ./cmd/api
 ```
 
+Run PostgreSQL with Docker:
+
+```bash
+docker compose up -d postgres
+```
+
 Health check:
 
 ```bash
@@ -354,6 +360,12 @@ Run migrations:
 
 ```bash
 go run ./cmd/migrate
+```
+
+Seed or update initial admin:
+
+```bash
+go run ./cmd/seed-admin
 ```
 
 Run tests:
@@ -367,6 +379,7 @@ Catatan:
 * API server tetap bisa start tanpa `DATABASE_URL`
 * jika `DATABASE_URL` diset, server akan ping PostgreSQL saat start dan health check
 * migration command membutuhkan `DATABASE_URL`
+* seed admin command membutuhkan `DATABASE_URL`, `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PHONE`, dan `ADMIN_PASSWORD`
 
 ## 12. Next Docs
 
