@@ -91,18 +91,18 @@ Admin bisa menambah appointment baru dengan rule v1.
 
 ### Tasks
 
-* [ ] buat request DTO create appointment
-* [ ] validasi field wajib
-* [ ] parse `meeting_date` + `meeting_time` menjadi `start_at`
-* [ ] hitung `end_at = start_at + 120 menit`
-* [ ] set `duration_minutes = 120`
-* [ ] set status default `scheduled`
-* [ ] validasi reminder config
-* [ ] implement overlap checking
-* [ ] simpan appointment
-* [ ] buat endpoint `POST /appointments`
-* [ ] buat test create success
-* [ ] buat test create ditolak jika overlap
+* [x] buat request DTO create appointment
+* [x] validasi field wajib
+* [x] parse `meeting_date` + `meeting_time` menjadi `start_at`
+* [x] hitung `end_at = start_at + 120 menit`
+* [x] set `duration_minutes = 120`
+* [x] set status default `scheduled`
+* [x] validasi reminder config
+* [x] implement overlap checking
+* [x] simpan appointment
+* [x] buat endpoint `POST /appointments`
+* [x] buat test create success
+* [x] buat test create ditolak jika overlap
 
 ### Output
 

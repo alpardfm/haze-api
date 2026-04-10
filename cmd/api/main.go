@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/alpardfm/haze-api/internal/appointment"
 	"github.com/alpardfm/haze-api/internal/auth"
 	"github.com/alpardfm/haze-api/internal/config"
 	"github.com/alpardfm/haze-api/internal/database"
@@ -54,6 +55,18 @@ func main() {
 			TokenManager: tokenManager,
 		},
 	})
+
+	var appointmentStore appointment.Store
+	if db != nil {
+		appointmentStore = appointment.SQLStore{DB: db}
+	}
+	appointmentHandler := appointment.Handler{
+		Service: &appointment.Service{
+			Store:    appointmentStore,
+			Timezone: cfg.Timezone,
+		},
+	}
+	mux.Handle("POST /appointments", auth.RequireAuth(tokenManager, http.HandlerFunc(appointmentHandler.Create)))
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		response.JSON(w, http.StatusNotFound, response.Envelope{
