@@ -139,11 +139,35 @@ func main() {
 func requestLogger(logger *slog.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		next.ServeHTTP(w, r)
+		recorder := &statusRecorder{
+			ResponseWriter: w,
+			statusCode:     http.StatusOK,
+		}
+
+		next.ServeHTTP(recorder, r)
 		logger.Info("request completed",
 			"method", r.Method,
 			"path", r.URL.Path,
+			"status", recorder.statusCode,
+			"bytes", recorder.bytesWritten,
 			"duration", time.Since(start).String(),
 		)
 	})
+}
+
+type statusRecorder struct {
+	http.ResponseWriter
+	statusCode   int
+	bytesWritten int
+}
+
+func (r *statusRecorder) WriteHeader(statusCode int) {
+	r.statusCode = statusCode
+	r.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (r *statusRecorder) Write(data []byte) (int, error) {
+	written, err := r.ResponseWriter.Write(data)
+	r.bytesWritten += written
+	return written, err
 }

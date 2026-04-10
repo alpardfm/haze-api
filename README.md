@@ -172,6 +172,16 @@ Field utama:
 
 ## 5. API Endpoints V1
 
+Default response envelope:
+
+```json
+{
+  "success": true,
+  "message": "message",
+  "data": {}
+}
+```
+
 ### Auth
 
 #### `POST /auth/login`
@@ -245,7 +255,11 @@ Kalau kosong:
 ```bash
 .
 ├── cmd/
-│   └── api/
+│   ├── api/
+│   ├── migrate/
+│   ├── reminder-worker/
+│   ├── seed-admin/
+│   └── status-worker/
 ├── internal/
 │   ├── auth/
 │   ├── appointment/
@@ -277,6 +291,14 @@ Backend v1 cukup sederhana:
 * worker / scheduler untuk reminder dan auto status
 * auth admin sederhana berbasis login
 
+Implementasi saat ini memakai:
+
+* Go
+* PostgreSQL
+* SQL migration sederhana
+* Bearer token HMAC sederhana untuk auth admin
+* command one-shot untuk migration, seed admin, reminder worker, dan status worker
+
 Prinsip teknis:
 
 * business logic harus mudah dibaca
@@ -300,8 +322,14 @@ Prinsip teknis:
 1. worker scan appointment status `scheduled`
 2. cek apakah reminder aktif
 3. cek apakah sudah masuk waktu reminder
-4. kirim reminder
+4. simpan reminder log-only ke `notification_logs`
 5. simpan `notification_logs`
+
+Catatan v1:
+
+* reminder belum mengirim email/WA
+* `notification_logs` dipakai sebagai simulasi pengiriman dan anti double-send
+* channel pengiriman nyata bisa diputuskan setelah flow reminder stabil
 
 ### Auto Status Worker / Fallback Read Logic
 

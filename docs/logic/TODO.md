@@ -247,15 +247,19 @@ Merapikan backend agar siap dipakai untuk development lanjut.
 
 ### Tasks
 
-* [ ] rapikan struktur service/repository/handler
-* [ ] rapikan validation error messages
-* [ ] rapikan auth middleware
-* [ ] tambahkan pagination jika benar-benar perlu
-* [ ] tambahkan request logging dasar
-* [ ] tambahkan integration test penting
-* [ ] review naming dan consistency field
-* [ ] rapikan README API repo
-* [ ] sinkronkan README, RULE, TODO
+* [x] rapikan struktur service/repository/handler
+* [x] rapikan validation error messages
+* [x] rapikan auth middleware
+* [x] tambahkan pagination jika benar-benar perlu
+* [x] tambahkan request logging dasar
+* [x] tambahkan integration test penting
+* [x] review naming dan consistency field
+* [x] rapikan README API repo
+* [x] sinkronkan README, RULE, TODO
+
+Catatan:
+
+* pagination belum ditambahkan karena belum benar-benar diperlukan untuk list v1 saat ini
 
 ### Output
 
@@ -281,17 +285,17 @@ Urutan implementasi yang disarankan:
 
 Project backend v1 dianggap cukup ketika:
 
-* [ ] admin bisa login
-* [ ] admin bisa create appointment
-* [ ] admin bisa list appointment
-* [ ] admin bisa lihat detail appointment
-* [ ] admin bisa update appointment
-* [ ] admin bisa cancel appointment
-* [ ] overlap appointment ditolak
-* [ ] public checker per tanggal berjalan
-* [ ] reminder berjalan untuk appointment scheduled
-* [ ] status otomatis berubah sesuai waktu
-* [ ] logic tetap konsisten dengan pondasi v1
+* [x] admin bisa login
+* [x] admin bisa create appointment
+* [x] admin bisa list appointment
+* [x] admin bisa lihat detail appointment
+* [x] admin bisa update appointment
+* [x] admin bisa cancel appointment
+* [x] overlap appointment ditolak
+* [x] public checker per tanggal berjalan
+* [x] reminder berjalan untuk appointment scheduled
+* [x] status otomatis berubah sesuai waktu
+* [x] logic tetap konsisten dengan pondasi v1
 
 ## Important Reminder
 
