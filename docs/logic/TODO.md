@@ -19,17 +19,17 @@ Membuat pondasi project backend yang siap dikembangkan.
 
 ### Tasks
 
-* [ ] tentukan stack final backend
-* [ ] buat struktur project repo
-* [ ] setup config environment
-* [ ] setup database connection
-* [ ] setup migration system
-* [ ] setup basic HTTP server
-* [ ] setup base routing
-* [ ] setup standard response format
-* [ ] setup error handling dasar
-* [ ] setup logger dasar
-* [ ] buat docs folder untuk logic project
+* [x] tentukan stack final backend
+* [x] buat struktur project repo
+* [x] setup config environment
+* [x] setup database connection
+* [x] setup migration system
+* [x] setup basic HTTP server
+* [x] setup base routing
+* [x] setup standard response format
+* [x] setup error handling dasar
+* [x] setup logger dasar
+* [x] buat docs folder untuk logic project
 
 ### Output
 
@@ -46,15 +46,15 @@ Menyiapkan schema inti sesuai business flow v1.
 
 ### Tasks
 
-* [ ] buat migration table `admins`
-* [ ] buat migration table `appointments`
-* [ ] buat migration table `notification_logs`
-* [ ] tentukan index yang relevan
-* [ ] pastikan field inti sesuai pondasi project
-* [ ] pastikan `duration_minutes` default 120
-* [ ] pastikan `cancelled_at` nullable
-* [ ] buat model/entity internal
-* [ ] pastikan `start_at` dan `end_at` jadi source utama logic waktu
+* [x] buat migration table `admins`
+* [x] buat migration table `appointments`
+* [x] buat migration table `notification_logs`
+* [x] tentukan index yang relevan
+* [x] pastikan field inti sesuai pondasi project
+* [x] pastikan `duration_minutes` default 120
+* [x] pastikan `cancelled_at` nullable
+* [x] buat model/entity internal
+* [x] pastikan `start_at` dan `end_at` jadi source utama logic waktu
 
 ### Output
 
@@ -69,14 +69,14 @@ Admin bisa login ke sistem.
 
 ### Tasks
 
-* [ ] buat seed / cara insert admin awal
-* [ ] implement login admin
-* [ ] validasi email dan password
-* [ ] hashing password
-* [ ] generate auth token / session strategy sederhana
-* [ ] middleware auth untuk endpoint private
-* [ ] buat endpoint `POST /auth/login`
-* [ ] buat test minimal login success / failed
+* [x] buat seed / cara insert admin awal
+* [x] implement login admin
+* [x] validasi email dan password
+* [x] hashing password
+* [x] generate auth token / session strategy sederhana
+* [x] middleware auth untuk endpoint private
+* [x] buat endpoint `POST /auth/login`
+* [x] buat test minimal login success / failed
 
 ### Output
 
@@ -91,18 +91,18 @@ Admin bisa menambah appointment baru dengan rule v1.
 
 ### Tasks
 
-* [ ] buat request DTO create appointment
-* [ ] validasi field wajib
-* [ ] parse `meeting_date` + `meeting_time` menjadi `start_at`
-* [ ] hitung `end_at = start_at + 120 menit`
-* [ ] set `duration_minutes = 120`
-* [ ] set status default `scheduled`
-* [ ] validasi reminder config
-* [ ] implement overlap checking
-* [ ] simpan appointment
-* [ ] buat endpoint `POST /appointments`
-* [ ] buat test create success
-* [ ] buat test create ditolak jika overlap
+* [x] buat request DTO create appointment
+* [x] validasi field wajib
+* [x] parse `meeting_date` + `meeting_time` menjadi `start_at`
+* [x] hitung `end_at = start_at + 120 menit`
+* [x] set `duration_minutes = 120`
+* [x] set status default `scheduled`
+* [x] validasi reminder config
+* [x] implement overlap checking
+* [x] simpan appointment
+* [x] buat endpoint `POST /appointments`
+* [x] buat test create success
+* [x] buat test create ditolak jika overlap
 
 ### Output
 
@@ -117,15 +117,15 @@ Admin bisa melihat daftar dan detail appointment.
 
 ### Tasks
 
-* [ ] implement endpoint `GET /appointments`
-* [ ] filter by tanggal
-* [ ] filter by status
-* [ ] sorting default by `start_at`
-* [ ] implement endpoint `GET /appointments/:id`
-* [ ] mapping response detail
-* [ ] fallback compute status saat read/list bila perlu
-* [ ] pastikan appointment cancelled tetap bisa dibaca di admin area jika dibutuhkan
-* [ ] buat test list dan detail
+* [x] implement endpoint `GET /appointments`
+* [x] filter by tanggal
+* [x] filter by status
+* [x] sorting default by `start_at`
+* [x] implement endpoint `GET /appointments/:id`
+* [x] mapping response detail
+* [x] fallback compute status saat read/list bila perlu
+* [x] pastikan appointment cancelled tetap bisa dibaca di admin area jika dibutuhkan
+* [x] buat test list dan detail
 
 ### Output
 
@@ -140,15 +140,15 @@ Admin bisa mengubah appointment tanpa merusak rule inti.
 
 ### Tasks
 
-* [ ] implement endpoint `PUT /appointments/:id`
-* [ ] validasi field update
-* [ ] recompute `start_at` dan `end_at` bila waktu diubah
-* [ ] overlap checking saat update
-* [ ] jaga `duration_minutes` tetap 120
-* [ ] jaga agar status valid tetap konsisten
-* [ ] aturan edit cancelled appointment ditentukan jelas
-* [ ] buat test update success
-* [ ] buat test update ditolak jika overlap
+* [x] implement endpoint `PUT /appointments/:id`
+* [x] validasi field update
+* [x] recompute `start_at` dan `end_at` bila waktu diubah
+* [x] overlap checking saat update
+* [x] jaga `duration_minutes` tetap 120
+* [x] jaga agar status valid tetap konsisten
+* [x] aturan edit cancelled appointment ditentukan jelas
+* [x] buat test update success
+* [x] buat test update ditolak jika overlap
 
 ### Output
 
@@ -163,13 +163,13 @@ Admin bisa membatalkan appointment.
 
 ### Tasks
 
-* [ ] implement endpoint `PATCH /appointments/:id/cancel`
-* [ ] set status `cancelled`
-* [ ] isi `cancelled_at`
-* [ ] pastikan appointment cancelled tidak ikut public checker aktif
-* [ ] pastikan reminder berhenti untuk cancelled appointment
-* [ ] buat test cancel success
-* [ ] buat test cancel idempotency / duplicate cancel behavior
+* [x] implement endpoint `PATCH /appointments/:id/cancel`
+* [x] set status `cancelled`
+* [x] isi `cancelled_at`
+* [x] pastikan appointment cancelled tidak ikut public checker aktif
+* [x] pastikan reminder berhenti untuk cancelled appointment
+* [x] buat test cancel success
+* [x] buat test cancel idempotency / duplicate cancel behavior
 
 ### Output
 
@@ -183,15 +183,15 @@ Public/client bisa melihat jadwal yang sudah terisi per tanggal.
 
 ### Tasks
 
-* [ ] implement endpoint `GET /public/schedules?date=YYYY-MM-DD`
-* [ ] validasi query `date`
-* [ ] ambil appointment aktif pada tanggal tersebut
-* [ ] exclude cancelled appointment
-* [ ] urutkan berdasarkan `start_at`
-* [ ] mapping response public hanya `start`, `end`, `status`
-* [ ] jangan tampilkan `client_name`, `address`, `notes`
-* [ ] buat test response kosong
-* [ ] buat test response berisi occupied ranges
+* [x] implement endpoint `GET /public/schedules?date=YYYY-MM-DD`
+* [x] validasi query `date`
+* [x] ambil appointment aktif pada tanggal tersebut
+* [x] exclude cancelled appointment
+* [x] urutkan berdasarkan `start_at`
+* [x] mapping response public hanya `start`, `end`, `status`
+* [x] jangan tampilkan `client_name`, `address`, `notes`
+* [x] buat test response kosong
+* [x] buat test response berisi occupied ranges
 
 ### Output
 
@@ -205,16 +205,16 @@ Sistem bisa mengirim reminder appointment sebelum dimulai.
 
 ### Tasks
 
-* [ ] buat worker/scheduler sederhana
-* [ ] query appointment status `scheduled`
-* [ ] filter `is_reminder_enabled = true`
-* [ ] cek apakah sudah masuk `reminder_start_at`
-* [ ] cek interval reminder berdasarkan `reminder_interval_hours`
-* [ ] kirim reminder ke admin
-* [ ] simpan log ke `notification_logs`
-* [ ] cegah double-send pada slot yang sama
-* [ ] skip appointment dengan status `on_going`, `done`, `cancelled`
-* [ ] buat test / simulation reminder flow
+* [x] buat worker/scheduler sederhana
+* [x] query appointment status `scheduled`
+* [x] filter `is_reminder_enabled = true`
+* [x] cek apakah sudah masuk `reminder_start_at`
+* [x] cek interval reminder berdasarkan `reminder_interval_hours`
+* [x] kirim reminder ke admin
+* [x] simpan log ke `notification_logs`
+* [x] cegah double-send pada slot yang sama
+* [x] skip appointment dengan status `on_going`, `done`, `cancelled`
+* [x] buat test / simulation reminder flow
 
 ### Output
 
@@ -228,12 +228,12 @@ Status appointment konsisten terhadap waktu.
 
 ### Tasks
 
-* [ ] buat worker untuk update status berkala
-* [ ] ubah `scheduled -> on_going` saat masuk waktu mulai
-* [ ] ubah `on_going -> done` saat lewat `end_at`
-* [ ] skip `cancelled`
-* [ ] tambah fallback compute status saat read/list bila worker telat
-* [ ] buat test transisi status
+* [x] buat worker untuk update status berkala
+* [x] ubah `scheduled -> on_going` saat masuk waktu mulai
+* [x] ubah `on_going -> done` saat lewat `end_at`
+* [x] skip `cancelled`
+* [x] tambah fallback compute status saat read/list bila worker telat
+* [x] buat test transisi status
 
 ### Output
 
@@ -247,15 +247,19 @@ Merapikan backend agar siap dipakai untuk development lanjut.
 
 ### Tasks
 
-* [ ] rapikan struktur service/repository/handler
-* [ ] rapikan validation error messages
-* [ ] rapikan auth middleware
-* [ ] tambahkan pagination jika benar-benar perlu
-* [ ] tambahkan request logging dasar
-* [ ] tambahkan integration test penting
-* [ ] review naming dan consistency field
-* [ ] rapikan README API repo
-* [ ] sinkronkan README, RULE, TODO
+* [x] rapikan struktur service/repository/handler
+* [x] rapikan validation error messages
+* [x] rapikan auth middleware
+* [x] tambahkan pagination jika benar-benar perlu
+* [x] tambahkan request logging dasar
+* [x] tambahkan integration test penting
+* [x] review naming dan consistency field
+* [x] rapikan README API repo
+* [x] sinkronkan README, RULE, TODO
+
+Catatan:
+
+* pagination belum ditambahkan karena belum benar-benar diperlukan untuk list v1 saat ini
 
 ### Output
 
@@ -281,17 +285,17 @@ Urutan implementasi yang disarankan:
 
 Project backend v1 dianggap cukup ketika:
 
-* [ ] admin bisa login
-* [ ] admin bisa create appointment
-* [ ] admin bisa list appointment
-* [ ] admin bisa lihat detail appointment
-* [ ] admin bisa update appointment
-* [ ] admin bisa cancel appointment
-* [ ] overlap appointment ditolak
-* [ ] public checker per tanggal berjalan
-* [ ] reminder berjalan untuk appointment scheduled
-* [ ] status otomatis berubah sesuai waktu
-* [ ] logic tetap konsisten dengan pondasi v1
+* [x] admin bisa login
+* [x] admin bisa create appointment
+* [x] admin bisa list appointment
+* [x] admin bisa lihat detail appointment
+* [x] admin bisa update appointment
+* [x] admin bisa cancel appointment
+* [x] overlap appointment ditolak
+* [x] public checker per tanggal berjalan
+* [x] reminder berjalan untuk appointment scheduled
+* [x] status otomatis berubah sesuai waktu
+* [x] logic tetap konsisten dengan pondasi v1
 
 ## Important Reminder
 

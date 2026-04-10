@@ -1,0 +1,86 @@
+name: CI/CD
+
+"on":
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.head_ref == 'dev'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.4"
+          cache: true
+
+      - name: Run tests
+        run: go test ./...
+
+  deploy:
+    name: Deploy VPS
+    runs-on: ubuntu-latest
+    needs:
+      - test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    env:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_USER: ${{ secrets.VPS_USER }}
+      VPS_PORT: ${{ secrets.VPS_PORT }}
+      VPS_APP_DIR: ${{ secrets.VPS_APP_DIR }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "${VPS_PORT:-22}" "$VPS_HOST" >> ~/.ssh/known_hosts
+
+      - name: Create VPS env file
+        run: |
+          cat > .env.vps <<'EOF'
+          APP_ENV=production
+          APP_TIMEZONE=${{ secrets.APP_TIMEZONE }}
+          AUTH_TOKEN_SECRET=${{ secrets.AUTH_TOKEN_SECRET }}
+          AUTH_TOKEN_TTL_HOURS=${{ secrets.AUTH_TOKEN_TTL_HOURS }}
+          POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          DATABASE_URL=postgres://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres:5432/${{ secrets.POSTGRES_DB }}?sslmode=disable
+          HOST_API_PORT=${{ secrets.HOST_API_PORT }}
+          REMINDER_WORKER_INTERVAL_SECONDS=${{ secrets.REMINDER_WORKER_INTERVAL_SECONDS }}
+          STATUS_WORKER_INTERVAL_SECONDS=${{ secrets.STATUS_WORKER_INTERVAL_SECONDS }}
+          ADMIN_NAME=${{ secrets.ADMIN_NAME }}
+          ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PHONE=${{ secrets.ADMIN_PHONE }}
+          ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+          EOF
+          sed -i 's/^          //' .env.vps
+
+      - name: Sync files to VPS
+        run: |
+          APP_DIR="${VPS_APP_DIR:-/home/${VPS_USER}/apps/haze-api}"
+          ssh -i ~/.ssh/id_ed25519 -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "mkdir -p '$APP_DIR'"
+          rsync -az --delete \
+            --exclude '.git' \
+            --exclude '.env' \
+            --exclude 'tmp' \
+            -e "ssh -i ~/.ssh/id_ed25519 -p ${VPS_PORT:-22}" \
+            ./ "$VPS_USER@$VPS_HOST:$APP_DIR/"
+
+      - name: Deploy
+        run: |
+          APP_DIR="${VPS_APP_DIR:-/home/${VPS_USER}/apps/haze-api}"
+          ssh -i ~/.ssh/id_ed25519 -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "cd '$APP_DIR' && chmod +x scripts/deploy-vps.sh && APP_DIR='$APP_DIR' ./scripts/deploy-vps.sh"
