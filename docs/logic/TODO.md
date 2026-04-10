@@ -228,12 +228,12 @@ Status appointment konsisten terhadap waktu.
 
 ### Tasks
 
-* [ ] buat worker untuk update status berkala
-* [ ] ubah `scheduled -> on_going` saat masuk waktu mulai
-* [ ] ubah `on_going -> done` saat lewat `end_at`
-* [ ] skip `cancelled`
-* [ ] tambah fallback compute status saat read/list bila worker telat
-* [ ] buat test transisi status
+* [x] buat worker untuk update status berkala
+* [x] ubah `scheduled -> on_going` saat masuk waktu mulai
+* [x] ubah `on_going -> done` saat lewat `end_at`
+* [x] skip `cancelled`
+* [x] tambah fallback compute status saat read/list bila worker telat
+* [x] buat test transisi status
 
 ### Output
 

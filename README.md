@@ -374,6 +374,12 @@ Run reminder worker once:
 go run ./cmd/reminder-worker
 ```
 
+Run status worker once:
+
+```bash
+go run ./cmd/status-worker
+```
+
 Run tests:
 
 ```bash
@@ -387,6 +393,7 @@ Catatan:
 * migration command membutuhkan `DATABASE_URL`
 * seed admin command membutuhkan `DATABASE_URL`, `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PHONE`, dan `ADMIN_PASSWORD`
 * reminder worker v1 masih log-only: hasil reminder disimpan ke `notification_logs`
+* status worker mengubah `scheduled -> on_going -> done` dan skip `cancelled`
 
 ## 12. Next Docs
 
