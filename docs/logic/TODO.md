@@ -46,15 +46,15 @@ Menyiapkan schema inti sesuai business flow v1.
 
 ### Tasks
 
-* [ ] buat migration table `admins`
-* [ ] buat migration table `appointments`
-* [ ] buat migration table `notification_logs`
-* [ ] tentukan index yang relevan
-* [ ] pastikan field inti sesuai pondasi project
-* [ ] pastikan `duration_minutes` default 120
-* [ ] pastikan `cancelled_at` nullable
-* [ ] buat model/entity internal
-* [ ] pastikan `start_at` dan `end_at` jadi source utama logic waktu
+* [x] buat migration table `admins`
+* [x] buat migration table `appointments`
+* [x] buat migration table `notification_logs`
+* [x] tentukan index yang relevan
+* [x] pastikan field inti sesuai pondasi project
+* [x] pastikan `duration_minutes` default 120
+* [x] pastikan `cancelled_at` nullable
+* [x] buat model/entity internal
+* [x] pastikan `start_at` dan `end_at` jadi source utama logic waktu
 
 ### Output
 
