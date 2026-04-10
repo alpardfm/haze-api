@@ -205,16 +205,16 @@ Sistem bisa mengirim reminder appointment sebelum dimulai.
 
 ### Tasks
 
-* [ ] buat worker/scheduler sederhana
-* [ ] query appointment status `scheduled`
-* [ ] filter `is_reminder_enabled = true`
-* [ ] cek apakah sudah masuk `reminder_start_at`
-* [ ] cek interval reminder berdasarkan `reminder_interval_hours`
-* [ ] kirim reminder ke admin
-* [ ] simpan log ke `notification_logs`
-* [ ] cegah double-send pada slot yang sama
-* [ ] skip appointment dengan status `on_going`, `done`, `cancelled`
-* [ ] buat test / simulation reminder flow
+* [x] buat worker/scheduler sederhana
+* [x] query appointment status `scheduled`
+* [x] filter `is_reminder_enabled = true`
+* [x] cek apakah sudah masuk `reminder_start_at`
+* [x] cek interval reminder berdasarkan `reminder_interval_hours`
+* [x] kirim reminder ke admin
+* [x] simpan log ke `notification_logs`
+* [x] cegah double-send pada slot yang sama
+* [x] skip appointment dengan status `on_going`, `done`, `cancelled`
+* [x] buat test / simulation reminder flow
 
 ### Output
 

@@ -368,6 +368,12 @@ Seed or update initial admin:
 go run ./cmd/seed-admin
 ```
 
+Run reminder worker once:
+
+```bash
+go run ./cmd/reminder-worker
+```
+
 Run tests:
 
 ```bash
@@ -380,6 +386,7 @@ Catatan:
 * jika `DATABASE_URL` diset, server akan ping PostgreSQL saat start dan health check
 * migration command membutuhkan `DATABASE_URL`
 * seed admin command membutuhkan `DATABASE_URL`, `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PHONE`, dan `ADMIN_PASSWORD`
+* reminder worker v1 masih log-only: hasil reminder disimpan ke `notification_logs`
 
 ## 12. Next Docs
 
