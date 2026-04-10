@@ -330,7 +330,45 @@ Saat mengembangkan project ini:
 * utamakan domain clarity daripada banyak fitur
 * prioritaskan implementasi yang realistis dan mudah di-maintain
 
-## 11. Next Docs
+## 11. Local Development
+
+Copy environment example:
+
+```bash
+cp .env.example .env
+```
+
+Run API server:
+
+```bash
+go run ./cmd/api
+```
+
+Health check:
+
+```bash
+curl http://localhost:8080/health
+```
+
+Run migrations:
+
+```bash
+go run ./cmd/migrate
+```
+
+Run tests:
+
+```bash
+go test ./...
+```
+
+Catatan:
+
+* API server tetap bisa start tanpa `DATABASE_URL`
+* jika `DATABASE_URL` diset, server akan ping PostgreSQL saat start dan health check
+* migration command membutuhkan `DATABASE_URL`
+
+## 12. Next Docs
 
 Dokumen pendukung:
 

@@ -19,17 +19,17 @@ Membuat pondasi project backend yang siap dikembangkan.
 
 ### Tasks
 
-* [ ] tentukan stack final backend
-* [ ] buat struktur project repo
-* [ ] setup config environment
-* [ ] setup database connection
-* [ ] setup migration system
-* [ ] setup basic HTTP server
-* [ ] setup base routing
-* [ ] setup standard response format
-* [ ] setup error handling dasar
-* [ ] setup logger dasar
-* [ ] buat docs folder untuk logic project
+* [x] tentukan stack final backend
+* [x] buat struktur project repo
+* [x] setup config environment
+* [x] setup database connection
+* [x] setup migration system
+* [x] setup basic HTTP server
+* [x] setup base routing
+* [x] setup standard response format
+* [x] setup error handling dasar
+* [x] setup logger dasar
+* [x] buat docs folder untuk logic project
 
 ### Output
 
