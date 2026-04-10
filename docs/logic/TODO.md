@@ -163,13 +163,13 @@ Admin bisa membatalkan appointment.
 
 ### Tasks
 
-* [ ] implement endpoint `PATCH /appointments/:id/cancel`
-* [ ] set status `cancelled`
-* [ ] isi `cancelled_at`
-* [ ] pastikan appointment cancelled tidak ikut public checker aktif
-* [ ] pastikan reminder berhenti untuk cancelled appointment
-* [ ] buat test cancel success
-* [ ] buat test cancel idempotency / duplicate cancel behavior
+* [x] implement endpoint `PATCH /appointments/:id/cancel`
+* [x] set status `cancelled`
+* [x] isi `cancelled_at`
+* [x] pastikan appointment cancelled tidak ikut public checker aktif
+* [x] pastikan reminder berhenti untuk cancelled appointment
+* [x] buat test cancel success
+* [x] buat test cancel idempotency / duplicate cancel behavior
 
 ### Output
 

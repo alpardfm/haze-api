@@ -22,6 +22,7 @@ type Store interface {
 	List(ctx context.Context, filter ListStoreFilter) ([]Appointment, error)
 	FindByID(ctx context.Context, adminID, id int64) (Appointment, error)
 	Update(ctx context.Context, appointment Appointment) (Appointment, error)
+	Cancel(ctx context.Context, adminID, id int64, cancelledAt time.Time) (Appointment, error)
 }
 
 type Service struct {
@@ -64,6 +65,11 @@ type ListInput struct {
 type ListStoreFilter struct {
 	CreatedByAdminID int64
 	Date             sql.NullTime
+}
+
+type CancelInput struct {
+	ID      int64
+	AdminID int64
 }
 
 func (s Service) Create(ctx context.Context, input CreateInput) (Appointment, error) {
@@ -349,6 +355,34 @@ func (s Service) Update(ctx context.Context, input UpdateInput) (Appointment, er
 
 	updated.CancelledAt = sql.NullTime{}
 	return s.Store.Update(ctx, updated)
+}
+
+func (s Service) Cancel(ctx context.Context, input CancelInput) (Appointment, error) {
+	if s.Store == nil {
+		return Appointment{}, fmt.Errorf("appointment store is required")
+	}
+	if input.AdminID <= 0 {
+		return Appointment{}, fmt.Errorf("%w: admin id is required", ErrInvalidInput)
+	}
+	if input.ID <= 0 {
+		return Appointment{}, fmt.Errorf("%w: appointment id is required", ErrInvalidInput)
+	}
+
+	existing, err := s.Store.FindByID(ctx, input.AdminID, input.ID)
+	if err != nil {
+		return Appointment{}, err
+	}
+	if existing.Status == StatusCancelled {
+		return existing, nil
+	}
+
+	cancelledAt := s.now()
+	cancelled, err := s.Store.Cancel(ctx, input.AdminID, input.ID, cancelledAt)
+	if err != nil {
+		return Appointment{}, err
+	}
+
+	return cancelled, nil
 }
 
 func ComputeStatus(appointment Appointment, now time.Time) Status {

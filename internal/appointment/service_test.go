@@ -2,6 +2,7 @@ package appointment
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
 )
@@ -12,6 +13,7 @@ type fakeStore struct {
 	list    []Appointment
 	detail  Appointment
 	updated Appointment
+	cancel  Appointment
 }
 
 func (s *fakeStore) HasOverlap(context.Context, time.Time, time.Time) (bool, error) {
@@ -42,6 +44,13 @@ func (s *fakeStore) Update(_ context.Context, appointment Appointment) (Appointm
 	appointment.UpdatedAt = time.Now()
 	s.updated = appointment
 	return appointment, nil
+}
+
+func (s *fakeStore) Cancel(_ context.Context, _ int64, _ int64, cancelledAt time.Time) (Appointment, error) {
+	s.cancel.Status = StatusCancelled
+	s.cancel.CancelledAt.Valid = true
+	s.cancel.CancelledAt.Time = cancelledAt
+	return s.cancel, nil
 }
 
 func TestCreateAppointmentSuccess(t *testing.T) {
@@ -81,6 +90,84 @@ func TestCreateAppointmentSuccess(t *testing.T) {
 	}
 	if !store.created.Notes.Valid {
 		t.Fatal("expected notes to be stored")
+	}
+}
+
+func TestCancelAppointmentSuccess(t *testing.T) {
+	location := mustLoadLocation(t, "Asia/Jakarta")
+	cancelledAt := time.Date(2026, 4, 11, 9, 0, 0, 0, location)
+	store := &fakeStore{
+		detail: Appointment{
+			ID:               1,
+			ClientName:       "Client",
+			Address:          "Address",
+			Status:           StatusScheduled,
+			CreatedByAdminID: 1,
+		},
+		cancel: Appointment{
+			ID:               1,
+			ClientName:       "Client",
+			Address:          "Address",
+			CreatedByAdminID: 1,
+		},
+	}
+	service := Service{
+		Store:    store,
+		Timezone: location,
+		Now: func() time.Time {
+			return cancelledAt
+		},
+	}
+
+	cancelled, err := service.Cancel(context.Background(), CancelInput{
+		ID:      1,
+		AdminID: 1,
+	})
+	if err != nil {
+		t.Fatalf("cancel appointment: %v", err)
+	}
+
+	if cancelled.Status != StatusCancelled {
+		t.Fatalf("expected cancelled status, got %q", cancelled.Status)
+	}
+	if !cancelled.CancelledAt.Valid {
+		t.Fatal("expected cancelled_at to be set")
+	}
+}
+
+func TestCancelAppointmentIsIdempotent(t *testing.T) {
+	location := mustLoadLocation(t, "Asia/Jakarta")
+	cancelledAt := time.Date(2026, 4, 11, 9, 0, 0, 0, location)
+	service := Service{
+		Store: &fakeStore{
+			detail: Appointment{
+				ID:               1,
+				ClientName:       "Client",
+				Address:          "Address",
+				Status:           StatusCancelled,
+				CreatedByAdminID: 1,
+				CancelledAt:      sqlNullTime(cancelledAt),
+			},
+		},
+		Timezone: location,
+		Now: func() time.Time {
+			return cancelledAt.Add(time.Hour)
+		},
+	}
+
+	cancelled, err := service.Cancel(context.Background(), CancelInput{
+		ID:      1,
+		AdminID: 1,
+	})
+	if err != nil {
+		t.Fatalf("cancel appointment: %v", err)
+	}
+
+	if cancelled.Status != StatusCancelled {
+		t.Fatalf("expected cancelled status, got %q", cancelled.Status)
+	}
+	if !cancelled.CancelledAt.Valid || !cancelled.CancelledAt.Time.Equal(cancelledAt) {
+		t.Fatalf("expected original cancelled_at, got %v", cancelled.CancelledAt)
 	}
 }
 
@@ -278,4 +365,8 @@ func mustLoadLocation(t *testing.T, name string) *time.Location {
 	}
 
 	return location
+}
+
+func sqlNullTime(value time.Time) sql.NullTime {
+	return sql.NullTime{Time: value, Valid: true}
 }

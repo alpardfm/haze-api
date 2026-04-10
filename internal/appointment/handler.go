@@ -243,6 +243,63 @@ func (h Handler) Update(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h Handler) Cancel(w http.ResponseWriter, r *http.Request) {
+	if h.Service == nil || h.Service.Store == nil {
+		response.JSON(w, http.StatusServiceUnavailable, response.Envelope{
+			Success: false,
+			Message: "appointment service unavailable",
+		})
+		return
+	}
+
+	adminID, ok := auth.AdminIDFromContext(r.Context())
+	if !ok {
+		response.JSON(w, http.StatusUnauthorized, response.Envelope{
+			Success: false,
+			Message: "authentication required",
+		})
+		return
+	}
+
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil || id <= 0 {
+		response.JSON(w, http.StatusBadRequest, response.Envelope{
+			Success: false,
+			Message: "invalid appointment id",
+		})
+		return
+	}
+
+	cancelled, err := h.Service.Cancel(r.Context(), CancelInput{
+		ID:      id,
+		AdminID: adminID,
+	})
+	if err != nil {
+		statusCode := http.StatusInternalServerError
+		message := "failed to cancel appointment"
+		switch {
+		case errors.Is(err, ErrInvalidInput):
+			statusCode = http.StatusBadRequest
+			message = err.Error()
+		case errors.Is(err, ErrNotFound):
+			statusCode = http.StatusNotFound
+			message = "appointment not found"
+		}
+
+		response.JSON(w, statusCode, response.Envelope{
+			Success: false,
+			Message: message,
+		})
+		return
+	}
+
+	response.JSON(w, http.StatusOK, response.Envelope{
+		Success: true,
+		Message: "appointment cancelled",
+		Data:    mapAppointment(cancelled),
+	})
+}
+
 func mapAppointment(appointment Appointment) map[string]any {
 	item := map[string]any{
 		"id":                      appointment.ID,
@@ -258,6 +315,7 @@ func mapAppointment(appointment Appointment) map[string]any {
 		"created_by_admin_id":     appointment.CreatedByAdminID,
 		"created_at":              appointment.CreatedAt,
 		"updated_at":              appointment.UpdatedAt,
+		"cancelled_at":            nil,
 		"reminder_start_at":       nil,
 		"reminder_interval_hours": nil,
 		"notes":                   nil,
@@ -271,6 +329,9 @@ func mapAppointment(appointment Appointment) map[string]any {
 	}
 	if appointment.ReminderIntervalHours.Valid {
 		item["reminder_interval_hours"] = appointment.ReminderIntervalHours.Int64
+	}
+	if appointment.CancelledAt.Valid {
+		item["cancelled_at"] = appointment.CancelledAt.Time
 	}
 
 	return item

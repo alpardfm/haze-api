@@ -154,6 +154,45 @@ func (s SQLStore) Update(ctx context.Context, appointment Appointment) (Appointm
 	return updated, nil
 }
 
+func (s SQLStore) Cancel(ctx context.Context, adminID, id int64, cancelledAt time.Time) (Appointment, error) {
+	row := s.DB.QueryRowContext(ctx, `
+		UPDATE appointments
+		SET
+			status = 'cancelled',
+			cancelled_at = $1,
+			updated_at = now()
+		WHERE id = $2 AND created_by_admin_id = $3
+		RETURNING
+			id,
+			client_name,
+			address,
+			notes,
+			meeting_date,
+			meeting_time::text,
+			duration_minutes,
+			start_at,
+			end_at,
+			status,
+			is_reminder_enabled,
+			reminder_start_at,
+			reminder_interval_hours,
+			created_by_admin_id,
+			created_at,
+			updated_at,
+			cancelled_at
+	`, cancelledAt, id, adminID)
+
+	cancelled, err := scanAppointment(row)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return Appointment{}, ErrNotFound
+		}
+		return Appointment{}, err
+	}
+
+	return cancelled, nil
+}
+
 func (s SQLStore) List(ctx context.Context, filter ListStoreFilter) ([]Appointment, error) {
 	query := strings.Builder{}
 	query.WriteString(`

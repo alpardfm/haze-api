@@ -70,6 +70,7 @@ func main() {
 	mux.Handle("GET /appointments", auth.RequireAuth(tokenManager, http.HandlerFunc(appointmentHandler.List)))
 	mux.Handle("GET /appointments/{id}", auth.RequireAuth(tokenManager, http.HandlerFunc(appointmentHandler.Detail)))
 	mux.Handle("PUT /appointments/{id}", auth.RequireAuth(tokenManager, http.HandlerFunc(appointmentHandler.Update)))
+	mux.Handle("PATCH /appointments/{id}/cancel", auth.RequireAuth(tokenManager, http.HandlerFunc(appointmentHandler.Cancel)))
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		response.JSON(w, http.StatusNotFound, response.Envelope{
