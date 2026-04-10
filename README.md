@@ -172,6 +172,12 @@ Field utama:
 
 ## 5. API Endpoints V1
 
+OpenAPI/Swagger spec tersedia di:
+
+```text
+docs/openapi.yaml
+```
+
 Default response envelope:
 
 ```json
@@ -423,7 +429,58 @@ Catatan:
 * reminder worker v1 masih log-only: hasil reminder disimpan ke `notification_logs`
 * status worker mengubah `scheduled -> on_going -> done` dan skip `cancelled`
 
-## 12. Next Docs
+## 12. Production Deploy
+
+Production API berjalan di:
+
+```text
+https://alpardfm.my.id/api/haze
+```
+
+Swagger/OpenAPI production tersedia di:
+
+```text
+https://alpardfm.my.id/api/haze/openapi.yaml
+```
+
+CI/CD memakai GitHub Actions:
+
+* PR dari branch `dev` ke `master` menjalankan `go test ./...`
+* merge/push ke branch `master` menjalankan deploy ke VPS
+* app production berjalan di Docker dengan port host `127.0.0.1:18081`
+* PostgreSQL production berjalan di container/volume Docker terpisah dan tidak diekspos ke publik
+* deploy script ada di `scripts/deploy-vps.sh`
+
+GitHub Actions membutuhkan repository secrets berikut:
+
+```text
+VPS_HOST
+VPS_USER
+VPS_PORT
+VPS_APP_DIR
+VPS_SSH_KEY
+APP_TIMEZONE
+AUTH_TOKEN_SECRET
+AUTH_TOKEN_TTL_HOURS
+POSTGRES_DB
+POSTGRES_USER
+POSTGRES_PASSWORD
+HOST_API_PORT
+REMINDER_WORKER_INTERVAL_SECONDS
+STATUS_WORKER_INTERVAL_SECONDS
+ADMIN_NAME
+ADMIN_EMAIL
+ADMIN_PHONE
+ADMIN_PASSWORD
+```
+
+Catatan infra:
+
+* Nginx proxy path `/api/haze/` ke service Haze di `127.0.0.1:18081`
+* OpenAPI YAML disalin saat deploy ke `/var/www/haze-api/openapi.yaml` agar bisa dibaca Nginx
+* project existing di VPS tetap memakai port dan container sendiri
+
+## 13. Next Docs
 
 Dokumen pendukung:
 

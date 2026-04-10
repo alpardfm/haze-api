@@ -1,0 +1,590 @@
+openapi: 3.0.3
+info:
+  title: Admin Schedule Reminder API
+  version: 1.0.0
+  description: |
+    Backend API v1 untuk admin appointment scheduling, reminder log-only, auto status worker, dan public occupied schedule checker.
+
+    Boundary v1:
+    - Tidak ada public booking.
+    - Tidak ada approval flow.
+    - Tidak ada client login.
+    - Tidak ada availability absolut.
+    - Tidak ada custom meeting duration.
+    - Reminder v1 masih log-only melalui `notification_logs`.
+servers:
+  - url: http://localhost:8080
+    description: Local development
+tags:
+  - name: Health
+  - name: Auth
+  - name: Appointments
+  - name: Public Schedules
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      security: []
+      responses:
+        "200":
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login admin
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          description: Invalid request body or missing fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Invalid email or password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /appointments:
+    get:
+      tags:
+        - Appointments
+      summary: List admin appointments
+      parameters:
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          example: "2026-05-20"
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/AppointmentStatus"
+      responses:
+        "200":
+          description: Appointments retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentListResponse"
+        "400":
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+        - Appointments
+      summary: Create appointment
+      description: Duration is fixed to 120 minutes. `start_at` and `end_at` are computed from `meeting_date` and `meeting_time`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAppointmentRequest"
+      responses:
+        "201":
+          description: Appointment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Appointment overlaps with an active appointment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /appointments/{id}:
+    get:
+      tags:
+        - Appointments
+      summary: Get appointment detail
+      parameters:
+        - $ref: "#/components/parameters/AppointmentID"
+      responses:
+        "200":
+          description: Appointment retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentResponse"
+        "400":
+          description: Invalid appointment id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Appointment not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      tags:
+        - Appointments
+      summary: Update appointment
+      description: Partial update. If meeting date or time changes, `start_at` and `end_at` are recomputed. Duration remains fixed to 120 minutes.
+      parameters:
+        - $ref: "#/components/parameters/AppointmentID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAppointmentRequest"
+      responses:
+        "200":
+          description: Appointment updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Appointment not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Appointment overlaps with an active appointment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /appointments/{id}/cancel:
+    patch:
+      tags:
+        - Appointments
+      summary: Cancel appointment
+      description: Idempotent cancel. Cancelled appointments do not block future overlap checks.
+      parameters:
+        - $ref: "#/components/parameters/AppointmentID"
+      responses:
+        "200":
+          description: Appointment cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentResponse"
+        "400":
+          description: Invalid appointment id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Appointment not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /public/schedules:
+    get:
+      tags:
+        - Public Schedules
+      summary: List occupied schedule ranges by date
+      description: Public checker only shows occupied ranges. It does not expose client data and does not claim absolute availability.
+      security: []
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          example: "2026-05-20"
+      responses:
+        "200":
+          description: Public schedules retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicScheduleResponse"
+        "400":
+          description: Invalid date
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: HMAC
+  parameters:
+    AppointmentID:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+      example: 1
+  schemas:
+    Envelope:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          nullable: true
+        error:
+          nullable: true
+    ErrorResponse:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            success:
+              type: boolean
+              example: false
+            message:
+              type: string
+              example: invalid request body
+    HealthResponse:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            success:
+              type: boolean
+              example: true
+            message:
+              type: string
+              example: service healthy
+            data:
+              type: object
+              properties:
+                database:
+                  type: object
+                  properties:
+                    configured:
+                      type: boolean
+                    status:
+                      type: string
+                      nullable: true
+                      example: ok
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: admin@example.com
+        password:
+          type: string
+          format: password
+          example: secret123
+    LoginResponse:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            success:
+              type: boolean
+              example: true
+            message:
+              type: string
+              example: login success
+            data:
+              type: object
+              properties:
+                token_type:
+                  type: string
+                  example: Bearer
+                token:
+                  type: string
+                expires_at:
+                  type: string
+                  format: date-time
+                admin:
+                  $ref: "#/components/schemas/Admin"
+    Admin:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: Admin
+        email:
+          type: string
+          format: email
+          example: admin@example.com
+        phone:
+          type: string
+          example: "6281234567890"
+    AppointmentStatus:
+      type: string
+      enum:
+        - scheduled
+        - on_going
+        - done
+        - cancelled
+    CreateAppointmentRequest:
+      type: object
+      required:
+        - client_name
+        - address
+        - meeting_date
+        - meeting_time
+      properties:
+        client_name:
+          type: string
+          example: Client A
+        address:
+          type: string
+          example: Jakarta Pusat
+        notes:
+          type: string
+          nullable: true
+          example: Internal note
+        meeting_date:
+          type: string
+          format: date
+          example: "2026-05-20"
+        meeting_time:
+          type: string
+          pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+          example: "09:30"
+        is_reminder_enabled:
+          type: boolean
+          default: false
+        reminder_start_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-05-20T08:30:00+07:00"
+        reminder_interval_hours:
+          type: integer
+          nullable: true
+          minimum: 1
+          example: 1
+    UpdateAppointmentRequest:
+      type: object
+      description: Partial update request. Omitted fields keep their current value.
+      properties:
+        client_name:
+          type: string
+          example: Client A Updated
+        address:
+          type: string
+          example: Jakarta Selatan
+        notes:
+          type: string
+          nullable: true
+          example: Updated internal note
+        meeting_date:
+          type: string
+          format: date
+          example: "2026-05-21"
+        meeting_time:
+          type: string
+          pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+          example: "13:00"
+        is_reminder_enabled:
+          type: boolean
+        reminder_start_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-05-21T12:00:00+07:00"
+        reminder_interval_hours:
+          type: integer
+          nullable: true
+          minimum: 1
+          example: 1
+    Appointment:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        client_name:
+          type: string
+          example: Client A
+        address:
+          type: string
+          example: Jakarta Pusat
+        notes:
+          type: string
+          nullable: true
+        meeting_date:
+          type: string
+          format: date
+          example: "2026-05-20"
+        meeting_time:
+          type: string
+          example: "09:30"
+        duration_minutes:
+          type: integer
+          enum:
+            - 120
+        start_at:
+          type: string
+          format: date-time
+        end_at:
+          type: string
+          format: date-time
+        status:
+          $ref: "#/components/schemas/AppointmentStatus"
+        is_reminder_enabled:
+          type: boolean
+        reminder_start_at:
+          type: string
+          format: date-time
+          nullable: true
+        reminder_interval_hours:
+          type: integer
+          nullable: true
+        created_by_admin_id:
+          type: integer
+          format: int64
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        cancelled_at:
+          type: string
+          format: date-time
+          nullable: true
+    AppointmentResponse:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/Appointment"
+    AppointmentListResponse:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Appointment"
+    PublicScheduleItem:
+      type: object
+      required:
+        - start
+        - end
+        - status
+      properties:
+        start:
+          type: string
+          example: "09:30"
+        end:
+          type: string
+          example: "11:30"
+        status:
+          type: string
+          enum:
+            - occupied
+    PublicScheduleResponse:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data:
+              type: object
+              required:
+                - date
+                - items
+              properties:
+                date:
+                  type: string
+                  format: date
+                  example: "2026-05-20"
+                items:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/PublicScheduleItem"
