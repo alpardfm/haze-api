@@ -117,15 +117,15 @@ Admin bisa melihat daftar dan detail appointment.
 
 ### Tasks
 
-* [ ] implement endpoint `GET /appointments`
-* [ ] filter by tanggal
-* [ ] filter by status
-* [ ] sorting default by `start_at`
-* [ ] implement endpoint `GET /appointments/:id`
-* [ ] mapping response detail
-* [ ] fallback compute status saat read/list bila perlu
-* [ ] pastikan appointment cancelled tetap bisa dibaca di admin area jika dibutuhkan
-* [ ] buat test list dan detail
+* [x] implement endpoint `GET /appointments`
+* [x] filter by tanggal
+* [x] filter by status
+* [x] sorting default by `start_at`
+* [x] implement endpoint `GET /appointments/:id`
+* [x] mapping response detail
+* [x] fallback compute status saat read/list bila perlu
+* [x] pastikan appointment cancelled tetap bisa dibaca di admin area jika dibutuhkan
+* [x] buat test list dan detail
 
 ### Output
 

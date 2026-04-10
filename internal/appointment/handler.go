@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/alpardfm/haze-api/internal/auth"
 	"github.com/alpardfm/haze-api/internal/shared/response"
@@ -65,6 +66,112 @@ func (h Handler) Create(w http.ResponseWriter, r *http.Request) {
 		Success: true,
 		Message: "appointment created",
 		Data:    mapAppointment(created),
+	})
+}
+
+func (h Handler) List(w http.ResponseWriter, r *http.Request) {
+	if h.Service == nil || h.Service.Store == nil {
+		response.JSON(w, http.StatusServiceUnavailable, response.Envelope{
+			Success: false,
+			Message: "appointment service unavailable",
+		})
+		return
+	}
+
+	adminID, ok := auth.AdminIDFromContext(r.Context())
+	if !ok {
+		response.JSON(w, http.StatusUnauthorized, response.Envelope{
+			Success: false,
+			Message: "authentication required",
+		})
+		return
+	}
+
+	items, err := h.Service.List(r.Context(), ListInput{
+		Date:             r.URL.Query().Get("date"),
+		Status:           r.URL.Query().Get("status"),
+		CreatedByAdminID: adminID,
+	})
+	if err != nil {
+		statusCode := http.StatusInternalServerError
+		message := "failed to list appointments"
+		if errors.Is(err, ErrInvalidInput) {
+			statusCode = http.StatusBadRequest
+			message = err.Error()
+		}
+
+		response.JSON(w, statusCode, response.Envelope{
+			Success: false,
+			Message: message,
+		})
+		return
+	}
+
+	data := make([]map[string]any, 0, len(items))
+	for _, item := range items {
+		data = append(data, mapAppointment(item))
+	}
+
+	response.JSON(w, http.StatusOK, response.Envelope{
+		Success: true,
+		Message: "appointments retrieved",
+		Data: map[string]any{
+			"items": data,
+		},
+	})
+}
+
+func (h Handler) Detail(w http.ResponseWriter, r *http.Request) {
+	if h.Service == nil || h.Service.Store == nil {
+		response.JSON(w, http.StatusServiceUnavailable, response.Envelope{
+			Success: false,
+			Message: "appointment service unavailable",
+		})
+		return
+	}
+
+	adminID, ok := auth.AdminIDFromContext(r.Context())
+	if !ok {
+		response.JSON(w, http.StatusUnauthorized, response.Envelope{
+			Success: false,
+			Message: "authentication required",
+		})
+		return
+	}
+
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil || id <= 0 {
+		response.JSON(w, http.StatusBadRequest, response.Envelope{
+			Success: false,
+			Message: "invalid appointment id",
+		})
+		return
+	}
+
+	item, err := h.Service.Detail(r.Context(), adminID, id)
+	if err != nil {
+		statusCode := http.StatusInternalServerError
+		message := "failed to get appointment"
+		switch {
+		case errors.Is(err, ErrInvalidInput):
+			statusCode = http.StatusBadRequest
+			message = err.Error()
+		case errors.Is(err, ErrNotFound):
+			statusCode = http.StatusNotFound
+			message = "appointment not found"
+		}
+
+		response.JSON(w, statusCode, response.Envelope{
+			Success: false,
+			Message: message,
+		})
+		return
+	}
+
+	response.JSON(w, http.StatusOK, response.Envelope{
+		Success: true,
+		Message: "appointment retrieved",
+		Data:    mapAppointment(item),
 	})
 }
 

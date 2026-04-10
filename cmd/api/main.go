@@ -67,6 +67,8 @@ func main() {
 		},
 	}
 	mux.Handle("POST /appointments", auth.RequireAuth(tokenManager, http.HandlerFunc(appointmentHandler.Create)))
+	mux.Handle("GET /appointments", auth.RequireAuth(tokenManager, http.HandlerFunc(appointmentHandler.List)))
+	mux.Handle("GET /appointments/{id}", auth.RequireAuth(tokenManager, http.HandlerFunc(appointmentHandler.Detail)))
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		response.JSON(w, http.StatusNotFound, response.Envelope{

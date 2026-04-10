@@ -11,17 +11,21 @@ import (
 
 var (
 	ErrInvalidInput = errors.New("invalid appointment input")
+	ErrNotFound     = errors.New("appointment not found")
 	ErrOverlap      = errors.New("appointment overlaps with an active appointment")
 )
 
 type Store interface {
 	HasOverlap(ctx context.Context, startAt, endAt time.Time) (bool, error)
 	Create(ctx context.Context, appointment Appointment) (Appointment, error)
+	List(ctx context.Context, filter ListStoreFilter) ([]Appointment, error)
+	FindByID(ctx context.Context, adminID, id int64) (Appointment, error)
 }
 
 type Service struct {
 	Store    Store
 	Timezone *time.Location
+	Now      func() time.Time
 }
 
 type CreateInput struct {
@@ -34,6 +38,17 @@ type CreateInput struct {
 	ReminderStartAt       string `json:"reminder_start_at"`
 	ReminderIntervalHours int    `json:"reminder_interval_hours"`
 	CreatedByAdminID      int64  `json:"-"`
+}
+
+type ListInput struct {
+	Date             string
+	Status           string
+	CreatedByAdminID int64
+}
+
+type ListStoreFilter struct {
+	CreatedByAdminID int64
+	Date             sql.NullTime
 }
 
 func (s Service) Create(ctx context.Context, input CreateInput) (Appointment, error) {
@@ -124,4 +139,106 @@ func (s Service) Create(ctx context.Context, input CreateInput) (Appointment, er
 	}
 
 	return s.Store.Create(ctx, appointment)
+}
+
+func (s Service) List(ctx context.Context, input ListInput) ([]Appointment, error) {
+	if s.Store == nil {
+		return nil, fmt.Errorf("appointment store is required")
+	}
+	if s.Timezone == nil {
+		return nil, fmt.Errorf("appointment timezone is required")
+	}
+	if input.CreatedByAdminID <= 0 {
+		return nil, fmt.Errorf("%w: admin id is required", ErrInvalidInput)
+	}
+
+	filter := ListStoreFilter{
+		CreatedByAdminID: input.CreatedByAdminID,
+	}
+
+	input.Date = strings.TrimSpace(input.Date)
+	if input.Date != "" {
+		date, err := time.ParseInLocation("2006-01-02", input.Date, s.Timezone)
+		if err != nil {
+			return nil, fmt.Errorf("%w: date must use YYYY-MM-DD", ErrInvalidInput)
+		}
+		filter.Date = sql.NullTime{Time: date, Valid: true}
+	}
+
+	input.Status = strings.TrimSpace(input.Status)
+	var statusFilter Status
+	if input.Status != "" {
+		status, err := parseStatus(input.Status)
+		if err != nil {
+			return nil, err
+		}
+		statusFilter = status
+	}
+
+	items, err := s.Store.List(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	now := s.now()
+	result := make([]Appointment, 0, len(items))
+	for _, item := range items {
+		item.Status = ComputeStatus(item, now)
+		if statusFilter != "" && item.Status != statusFilter {
+			continue
+		}
+		result = append(result, item)
+	}
+
+	return result, nil
+}
+
+func (s Service) Detail(ctx context.Context, adminID, id int64) (Appointment, error) {
+	if s.Store == nil {
+		return Appointment{}, fmt.Errorf("appointment store is required")
+	}
+	if adminID <= 0 {
+		return Appointment{}, fmt.Errorf("%w: admin id is required", ErrInvalidInput)
+	}
+	if id <= 0 {
+		return Appointment{}, fmt.Errorf("%w: appointment id is required", ErrInvalidInput)
+	}
+
+	item, err := s.Store.FindByID(ctx, adminID, id)
+	if err != nil {
+		return Appointment{}, err
+	}
+
+	item.Status = ComputeStatus(item, s.now())
+	return item, nil
+}
+
+func ComputeStatus(appointment Appointment, now time.Time) Status {
+	if appointment.Status == StatusCancelled {
+		return StatusCancelled
+	}
+	if now.Before(appointment.StartAt) {
+		return StatusScheduled
+	}
+	if now.Before(appointment.EndAt) {
+		return StatusOnGoing
+	}
+	return StatusDone
+}
+
+func (s Service) now() time.Time {
+	if s.Now != nil {
+		return s.Now()
+	}
+	return time.Now()
+}
+
+func parseStatus(value string) (Status, error) {
+	status := Status(value)
+	switch status {
+	case StatusScheduled, StatusOnGoing, StatusDone, StatusCancelled:
+		return status, nil
+	default:
+		return "", fmt.Errorf("%w: invalid status", ErrInvalidInput)
+	}
 }

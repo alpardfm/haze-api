@@ -9,6 +9,8 @@ import (
 type fakeStore struct {
 	overlap bool
 	created Appointment
+	list    []Appointment
+	detail  Appointment
 }
 
 func (s *fakeStore) HasOverlap(context.Context, time.Time, time.Time) (bool, error) {
@@ -21,6 +23,14 @@ func (s *fakeStore) Create(_ context.Context, appointment Appointment) (Appointm
 	appointment.UpdatedAt = appointment.CreatedAt
 	s.created = appointment
 	return appointment, nil
+}
+
+func (s *fakeStore) List(context.Context, ListStoreFilter) ([]Appointment, error) {
+	return s.list, nil
+}
+
+func (s *fakeStore) FindByID(context.Context, int64, int64) (Appointment, error) {
+	return s.detail, nil
 }
 
 func TestCreateAppointmentSuccess(t *testing.T) {
@@ -60,6 +70,51 @@ func TestCreateAppointmentSuccess(t *testing.T) {
 	}
 	if !store.created.Notes.Valid {
 		t.Fatal("expected notes to be stored")
+	}
+}
+
+func TestListComputesStatusAndFiltersAfterCompute(t *testing.T) {
+	location := mustLoadLocation(t, "Asia/Jakarta")
+	now := time.Date(2026, 4, 12, 10, 0, 0, 0, location)
+	service := Service{
+		Store: &fakeStore{
+			list: []Appointment{
+				{
+					ID:      1,
+					StartAt: time.Date(2026, 4, 12, 9, 30, 0, 0, location),
+					EndAt:   time.Date(2026, 4, 12, 11, 30, 0, 0, location),
+					Status:  StatusScheduled,
+				},
+				{
+					ID:      2,
+					StartAt: time.Date(2026, 4, 12, 13, 0, 0, 0, location),
+					EndAt:   time.Date(2026, 4, 12, 15, 0, 0, 0, location),
+					Status:  StatusScheduled,
+				},
+			},
+		},
+		Timezone: location,
+		Now: func() time.Time {
+			return now
+		},
+	}
+
+	items, err := service.List(context.Background(), ListInput{
+		Status:           "on_going",
+		CreatedByAdminID: 1,
+	})
+	if err != nil {
+		t.Fatalf("list appointments: %v", err)
+	}
+
+	if len(items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(items))
+	}
+	if items[0].ID != 1 {
+		t.Fatalf("expected appointment 1, got %d", items[0].ID)
+	}
+	if items[0].Status != StatusOnGoing {
+		t.Fatalf("expected computed on_going status, got %q", items[0].Status)
 	}
 }
 
