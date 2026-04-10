@@ -11,9 +11,14 @@ type fakeStore struct {
 	created Appointment
 	list    []Appointment
 	detail  Appointment
+	updated Appointment
 }
 
 func (s *fakeStore) HasOverlap(context.Context, time.Time, time.Time) (bool, error) {
+	return s.overlap, nil
+}
+
+func (s *fakeStore) HasOverlapExcludingID(context.Context, int64, time.Time, time.Time) (bool, error) {
 	return s.overlap, nil
 }
 
@@ -31,6 +36,12 @@ func (s *fakeStore) List(context.Context, ListStoreFilter) ([]Appointment, error
 
 func (s *fakeStore) FindByID(context.Context, int64, int64) (Appointment, error) {
 	return s.detail, nil
+}
+
+func (s *fakeStore) Update(_ context.Context, appointment Appointment) (Appointment, error) {
+	appointment.UpdatedAt = time.Now()
+	s.updated = appointment
+	return appointment, nil
 }
 
 func TestCreateAppointmentSuccess(t *testing.T) {
@@ -70,6 +81,127 @@ func TestCreateAppointmentSuccess(t *testing.T) {
 	}
 	if !store.created.Notes.Valid {
 		t.Fatal("expected notes to be stored")
+	}
+}
+
+func TestUpdateAppointmentSuccess(t *testing.T) {
+	location := mustLoadLocation(t, "Asia/Jakarta")
+	store := &fakeStore{
+		detail: Appointment{
+			ID:               1,
+			ClientName:       "Old Client",
+			Address:          "Old Address",
+			MeetingDate:      time.Date(2026, 4, 12, 0, 0, 0, 0, location),
+			MeetingTime:      time.Date(0, 1, 1, 9, 30, 0, 0, time.UTC),
+			DurationMinutes:  DurationMinutesV1,
+			StartAt:          time.Date(2026, 4, 12, 9, 30, 0, 0, location),
+			EndAt:            time.Date(2026, 4, 12, 11, 30, 0, 0, location),
+			Status:           StatusScheduled,
+			CreatedByAdminID: 1,
+		},
+	}
+	service := Service{
+		Store:    store,
+		Timezone: location,
+		Now: func() time.Time {
+			return time.Date(2026, 4, 11, 9, 0, 0, 0, location)
+		},
+	}
+
+	clientName := "New Client"
+	meetingTime := "13:00"
+	updated, err := service.Update(context.Background(), UpdateInput{
+		ID:          1,
+		AdminID:     1,
+		ClientName:  &clientName,
+		MeetingTime: &meetingTime,
+	})
+	if err != nil {
+		t.Fatalf("update appointment: %v", err)
+	}
+
+	if updated.ClientName != "New Client" {
+		t.Fatalf("expected updated client name, got %q", updated.ClientName)
+	}
+	if updated.DurationMinutes != DurationMinutesV1 {
+		t.Fatalf("expected duration %d, got %d", DurationMinutesV1, updated.DurationMinutes)
+	}
+	if updated.StartAt.Format(time.RFC3339) != "2026-04-12T13:00:00+07:00" {
+		t.Fatalf("unexpected start_at: %s", updated.StartAt.Format(time.RFC3339))
+	}
+	if updated.EndAt.Format(time.RFC3339) != "2026-04-12T15:00:00+07:00" {
+		t.Fatalf("unexpected end_at: %s", updated.EndAt.Format(time.RFC3339))
+	}
+}
+
+func TestUpdateAppointmentRejectsOverlap(t *testing.T) {
+	location := mustLoadLocation(t, "Asia/Jakarta")
+	store := &fakeStore{
+		overlap: true,
+		detail: Appointment{
+			ID:               1,
+			ClientName:       "Client",
+			Address:          "Address",
+			MeetingDate:      time.Date(2026, 4, 12, 0, 0, 0, 0, location),
+			MeetingTime:      time.Date(0, 1, 1, 9, 30, 0, 0, time.UTC),
+			DurationMinutes:  DurationMinutesV1,
+			StartAt:          time.Date(2026, 4, 12, 9, 30, 0, 0, location),
+			EndAt:            time.Date(2026, 4, 12, 11, 30, 0, 0, location),
+			Status:           StatusScheduled,
+			CreatedByAdminID: 1,
+		},
+	}
+	service := Service{
+		Store:    store,
+		Timezone: location,
+		Now: func() time.Time {
+			return time.Date(2026, 4, 11, 9, 0, 0, 0, location)
+		},
+	}
+
+	meetingTime := "13:00"
+	_, err := service.Update(context.Background(), UpdateInput{
+		ID:          1,
+		AdminID:     1,
+		MeetingTime: &meetingTime,
+	})
+	if err != ErrOverlap {
+		t.Fatalf("expected ErrOverlap, got %v", err)
+	}
+}
+
+func TestUpdateAppointmentRejectsCancelled(t *testing.T) {
+	location := mustLoadLocation(t, "Asia/Jakarta")
+	store := &fakeStore{
+		detail: Appointment{
+			ID:               1,
+			ClientName:       "Client",
+			Address:          "Address",
+			MeetingDate:      time.Date(2026, 4, 12, 0, 0, 0, 0, location),
+			MeetingTime:      time.Date(0, 1, 1, 9, 30, 0, 0, time.UTC),
+			DurationMinutes:  DurationMinutesV1,
+			StartAt:          time.Date(2026, 4, 12, 9, 30, 0, 0, location),
+			EndAt:            time.Date(2026, 4, 12, 11, 30, 0, 0, location),
+			Status:           StatusCancelled,
+			CreatedByAdminID: 1,
+		},
+	}
+	service := Service{
+		Store:    store,
+		Timezone: location,
+		Now: func() time.Time {
+			return time.Date(2026, 4, 11, 9, 0, 0, 0, location)
+		},
+	}
+
+	clientName := "New Client"
+	_, err := service.Update(context.Background(), UpdateInput{
+		ID:         1,
+		AdminID:    1,
+		ClientName: &clientName,
+	})
+	if err == nil {
+		t.Fatal("expected update cancelled appointment to fail")
 	}
 }
 

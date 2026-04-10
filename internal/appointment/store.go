@@ -30,6 +30,24 @@ func (s SQLStore) HasOverlap(ctx context.Context, startAt, endAt time.Time) (boo
 	return exists, nil
 }
 
+func (s SQLStore) HasOverlapExcludingID(ctx context.Context, id int64, startAt, endAt time.Time) (bool, error) {
+	var exists bool
+	if err := s.DB.QueryRowContext(ctx, `
+		SELECT EXISTS (
+			SELECT 1
+			FROM appointments
+			WHERE id <> $1
+				AND status IN ('scheduled', 'on_going')
+				AND start_at < $3
+				AND end_at > $2
+		)
+	`, id, startAt, endAt).Scan(&exists); err != nil {
+		return false, fmt.Errorf("check appointment overlap excluding id: %w", err)
+	}
+
+	return exists, nil
+}
+
 func (s SQLStore) Create(ctx context.Context, appointment Appointment) (Appointment, error) {
 	if err := s.DB.QueryRowContext(ctx, `
 		INSERT INTO appointments (
@@ -68,6 +86,72 @@ func (s SQLStore) Create(ctx context.Context, appointment Appointment) (Appointm
 	}
 
 	return appointment, nil
+}
+
+func (s SQLStore) Update(ctx context.Context, appointment Appointment) (Appointment, error) {
+	row := s.DB.QueryRowContext(ctx, `
+		UPDATE appointments
+		SET
+			client_name = $1,
+			address = $2,
+			notes = $3,
+			meeting_date = $4,
+			meeting_time = $5,
+			duration_minutes = $6,
+			start_at = $7,
+			end_at = $8,
+			status = $9,
+			is_reminder_enabled = $10,
+			reminder_start_at = $11,
+			reminder_interval_hours = $12,
+			updated_at = now(),
+			cancelled_at = $13
+		WHERE id = $14 AND created_by_admin_id = $15
+		RETURNING
+			id,
+			client_name,
+			address,
+			notes,
+			meeting_date,
+			meeting_time::text,
+			duration_minutes,
+			start_at,
+			end_at,
+			status,
+			is_reminder_enabled,
+			reminder_start_at,
+			reminder_interval_hours,
+			created_by_admin_id,
+			created_at,
+			updated_at,
+			cancelled_at
+	`,
+		appointment.ClientName,
+		appointment.Address,
+		appointment.Notes,
+		appointment.MeetingDate,
+		appointment.MeetingTime,
+		appointment.DurationMinutes,
+		appointment.StartAt,
+		appointment.EndAt,
+		string(appointment.Status),
+		appointment.IsReminderEnabled,
+		appointment.ReminderStartAt,
+		appointment.ReminderIntervalHours,
+		appointment.CancelledAt,
+		appointment.ID,
+		appointment.CreatedByAdminID,
+	)
+
+	updated, err := scanAppointment(row)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return Appointment{}, ErrNotFound
+		}
+		return Appointment{}, err
+	}
+
+	return updated, nil
 }
 
 func (s SQLStore) List(ctx context.Context, filter ListStoreFilter) ([]Appointment, error) {

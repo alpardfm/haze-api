@@ -175,6 +175,74 @@ func (h Handler) Detail(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h Handler) Update(w http.ResponseWriter, r *http.Request) {
+	if h.Service == nil || h.Service.Store == nil {
+		response.JSON(w, http.StatusServiceUnavailable, response.Envelope{
+			Success: false,
+			Message: "appointment service unavailable",
+		})
+		return
+	}
+
+	adminID, ok := auth.AdminIDFromContext(r.Context())
+	if !ok {
+		response.JSON(w, http.StatusUnauthorized, response.Envelope{
+			Success: false,
+			Message: "authentication required",
+		})
+		return
+	}
+
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil || id <= 0 {
+		response.JSON(w, http.StatusBadRequest, response.Envelope{
+			Success: false,
+			Message: "invalid appointment id",
+		})
+		return
+	}
+
+	var input UpdateInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		response.JSON(w, http.StatusBadRequest, response.Envelope{
+			Success: false,
+			Message: "invalid request body",
+		})
+		return
+	}
+	input.ID = id
+	input.AdminID = adminID
+
+	updated, err := h.Service.Update(r.Context(), input)
+	if err != nil {
+		statusCode := http.StatusInternalServerError
+		message := "failed to update appointment"
+		switch {
+		case errors.Is(err, ErrInvalidInput):
+			statusCode = http.StatusBadRequest
+			message = err.Error()
+		case errors.Is(err, ErrOverlap):
+			statusCode = http.StatusConflict
+			message = "appointment overlaps with an active appointment"
+		case errors.Is(err, ErrNotFound):
+			statusCode = http.StatusNotFound
+			message = "appointment not found"
+		}
+
+		response.JSON(w, statusCode, response.Envelope{
+			Success: false,
+			Message: message,
+		})
+		return
+	}
+
+	response.JSON(w, http.StatusOK, response.Envelope{
+		Success: true,
+		Message: "appointment updated",
+		Data:    mapAppointment(updated),
+	})
+}
+
 func mapAppointment(appointment Appointment) map[string]any {
 	item := map[string]any{
 		"id":                      appointment.ID,

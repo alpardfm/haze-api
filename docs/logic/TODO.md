@@ -140,15 +140,15 @@ Admin bisa mengubah appointment tanpa merusak rule inti.
 
 ### Tasks
 
-* [ ] implement endpoint `PUT /appointments/:id`
-* [ ] validasi field update
-* [ ] recompute `start_at` dan `end_at` bila waktu diubah
-* [ ] overlap checking saat update
-* [ ] jaga `duration_minutes` tetap 120
-* [ ] jaga agar status valid tetap konsisten
-* [ ] aturan edit cancelled appointment ditentukan jelas
-* [ ] buat test update success
-* [ ] buat test update ditolak jika overlap
+* [x] implement endpoint `PUT /appointments/:id`
+* [x] validasi field update
+* [x] recompute `start_at` dan `end_at` bila waktu diubah
+* [x] overlap checking saat update
+* [x] jaga `duration_minutes` tetap 120
+* [x] jaga agar status valid tetap konsisten
+* [x] aturan edit cancelled appointment ditentukan jelas
+* [x] buat test update success
+* [x] buat test update ditolak jika overlap
 
 ### Output
 
