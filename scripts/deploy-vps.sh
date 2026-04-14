@@ -20,6 +20,10 @@ cp .env.vps .env
 if [ -f docs/openapi.yaml ] && command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
   sudo install -d -m 755 /var/www/haze-api
   sudo install -m 644 docs/openapi.yaml /var/www/haze-api/openapi.yaml
+
+  if [ -f docs/swagger.html ]; then
+    sudo install -m 644 docs/swagger.html /var/www/haze-api/swagger.html
+  fi
 fi
 
 $COMPOSE build api
