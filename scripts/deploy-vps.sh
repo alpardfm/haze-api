@@ -2,7 +2,11 @@
 set -eu
 
 APP_DIR="${APP_DIR:-/home/alpardfm/apps/haze-api}"
+COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-haze-api}"
 COMPOSE="docker-compose -f docker-compose.prod.yml"
+COMPOSE_DOCKER_CLI_BUILD=0
+DOCKER_BUILDKIT=0
+export COMPOSE_PROJECT_NAME COMPOSE_DOCKER_CLI_BUILD DOCKER_BUILDKIT
 
 cd "$APP_DIR"
 
@@ -22,5 +26,19 @@ $COMPOSE build api
 $COMPOSE up -d postgres
 $COMPOSE run --rm migrate
 $COMPOSE run --rm seed-admin
-$COMPOSE up -d api reminder-worker status-worker
+
+# docker-compose v1 can fail with KeyError 'ContainerConfig' when recreating
+# containers against newer Docker image metadata. Remove only stateless app
+# containers first; keep postgres and its named volume intact.
+for service in api reminder-worker status-worker migrate seed-admin; do
+  ids="$(docker ps -aq \
+    --filter "label=com.docker.compose.project=$COMPOSE_PROJECT_NAME" \
+    --filter "label=com.docker.compose.service=$service")"
+
+  if [ -n "$ids" ]; then
+    docker rm -f $ids
+  fi
+done
+
+$COMPOSE up -d --no-deps --force-recreate api reminder-worker status-worker
 $COMPOSE ps
