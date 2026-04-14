@@ -178,6 +178,12 @@ OpenAPI/Swagger spec tersedia di:
 docs/openapi.yaml
 ```
 
+Swagger UI production tersedia di:
+
+```text
+https://alpardfm.my.id/api/haze/swagger
+```
+
 Default response envelope:
 
 ```json
@@ -441,6 +447,12 @@ Swagger/OpenAPI production tersedia di:
 
 ```text
 https://alpardfm.my.id/api/haze/openapi.yaml
+```
+
+Swagger UI production tersedia di:
+
+```text
+https://alpardfm.my.id/api/haze/swagger
 ```
 
 CI/CD memakai GitHub Actions:
